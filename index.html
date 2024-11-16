@@ -345,6 +345,8 @@
             appState.isVisible = false;
             startButton.classList.add("hidden");
             myJourneyButton.classList.add("hidden");
+            timerDisplay.classList.add("hidden");
+            appState.isVisible = false;
             document.getElementById("githubLink").classList.add("hidden"); // Hide GitHub link
 
             // Hide the title and slider
@@ -401,7 +403,11 @@
         function toggleTimerVisibility() {
             appState.isVisible = !appState.isVisible; // Toggle state
             const element = document.getElementById("timer");
-            element.style.display = appState.isVisible ? "block" : "none";
+            if (appState.isVisible) {
+                timerDisplay.classList.remove("hidden");
+            } else {
+                timerDisplay.classList.add("hidden");
+            }
         }
 
         document.getElementById("timer-area").addEventListener("click", toggleTimerVisibility);
