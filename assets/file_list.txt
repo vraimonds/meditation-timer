@@ -1,2 +1,2 @@
-file 'background-video.mp4'
+file 'background-video-short.mp4'
 file 'background-video-reversed.mp4'
