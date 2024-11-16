@@ -349,6 +349,15 @@
             appState.isVisible = false;
             document.getElementById("githubLink").classList.add("hidden"); // Hide GitHub link
 
+            // Unlock audio playback for iOS
+            endBell.play().then(() => {
+                endBell.pause(); // Immediately pause after unlocking
+                endBell.currentTime = 0; // Reset to the start
+                console.log("Audio playback unlocked for iOS.");
+            }).catch((err) => {
+                console.error("Audio playback could not be unlocked:", err);
+            });
+
             // Hide the title and slider
             title.classList.add("hidden");
             timeSlider.classList.add("hidden");
@@ -402,7 +411,6 @@
         // Toggle timer visibility on click
         function toggleTimerVisibility() {
             appState.isVisible = !appState.isVisible; // Toggle state
-            const element = document.getElementById("timer");
             if (appState.isVisible) {
                 timerDisplay.classList.remove("hidden");
             } else {
