@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meditation Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: url('assets/meditation-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 5px black;
+        }
+
+        .hidden {
+            display: none !important; 
+        }
+
+        .timer-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 40px auto;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .progress-ring circle {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.8);
+            stroke-width: 10;
+            stroke-dasharray: 628; /* Circle circumference */
+            stroke-dashoffset: 628; /* Circle circumference */
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .timer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: bold;
+            text-shadow: 1px 1px 4px black;
+        }
+
+        button, input[type="range"] {
+            background-color: rgba(50, 50, 50, 0.8);
+            color: white;
+            border: none;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px black;
+            transition: background-color 0.3s, opacity 0.3s;
+            opacity: 0.8; /* Slight transparency */
+            display: block; /* Stack buttons vertically */
+            margin: 30px auto; /* Center buttons horizontally */
+        }
+
+        button:hover, input[type="range"]:hover {
+            opacity: 1.0; /* Fully opaque on hover */
+        }
+
+        #startButton {
+            padding: 16px 32px; /* Larger Start button */
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #myJourneyButton {
+            font-size: 16px;
+            padding: 12px 28px; /* Slightly smaller than Start button */
+            margin-top: 0; /* Positioned closer to Start button */
+        }
+
+        input[type="range"] {
+            width: 40%; /* Adjust the slider width */
+            margin: 20px auto; /* Center horizontally */
+            display: block; /* Ensure it behaves like a block element */
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            background: #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -6px;
+        }
+
+        .time-display {
+            margin: 10px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(50, 50, 50, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .popup h2 {
+            margin: 0 0 10px;
+        }
+
+        .popup p {
+            margin: 10px 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px; /* Space between icon and text */
+        }
+
+        .popup p span:first-child {
+            font-size: 24px; /* Icon size */
+        }
+
+        .popup button {
+            background-color: rgba(50, 50, 50, 0.8);
+            padding: 16px 32px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            color: white;
+            margin-top: 10px;
+            font-size: 18px;
+            box-shadow: 2px 2px 5px black;
+        }
+
+        .popup button:hover {
+            background-color: rgba(80, 80, 80, 0.8);
+        }
+
+        #githubLink {
+            position: fixed;
+            bottom: 20px; /* Position at the bottom */
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%); /* Adjust for centering */
+            z-index: 1000;
+            display: block;
+            width: 40px; /* Icon size */
+            height: 40px;
+            opacity: 0.8; /* Slight transparency */
+            transition: opacity 0.3s ease;
+        }
+
+        #githubLink:hover {
+            opacity: 1.0; /* Fully opaque on hover */
+        }
+
+        #githubLink img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%; /* Optional: circular icon */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Optional: shadow for better visibility */
+        }
+
+        #backgroundVideo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the video covers the screen */
+            z-index: -1; /* Places the video behind other content */
+        }
+    </style>
+</head>
+<body>
+    <video id="backgroundVideo" autoplay muted loop playsinline class="hidden">
+        <source src="assets/background-video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <h1 id="title">Meditation Timer</h1>
+    <div class="time-display">
+        <span id="timeValue">10</span>
+    </div>
+    <input type="range" id="timeSlider" min="1" max="30" value="10">
+    <div class="timer-container">
+        <svg class="progress-ring" width="200" height="200">
+            <circle cx="100" cy="100" r="100"></circle>
+        </svg>
+        <div class="timer" id="timer">10:00</div>
+    </div>
+    <button id="startButton">Start</button>
+    <button id="myJourneyButton">My Journey</button>
+
+    <!-- Popup -->
+    <div id="popup" class="popup hidden">
+        <h2>Meditation Stats</h2>
+        <p>
+            <span>⏳</span> You have meditated for <span id="totalTime">0</span> minutes.
+        </p>
+        <p>
+            <span>📅</span> Over <span id="totalDays">0</span> days.
+        </p>
+        <button id="closePopup">Close</button>
+    </div>
+
+    <div id="videoOption">
+        <label>
+            <input type="checkbox" id="videoToggle">
+            Use video background
+        </label>
+    </div>    
+
+    <a id="githubLink" href="https://github.com/your-username/your-repo" target="_blank">
+        <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" />
+    </a>
+
+    <!-- Sounds -->
+    <audio id="startBell" src="assets/start-bell.mp3"></audio>
+    <audio id="endBell" src="assets/end-bell.mp3"></audio>
+    <audio id="backgroundSound" src="assets/background-sound.mp3" loop></audio>
+
+    <script>
+        const startButton = document.getElementById("startButton");
+        const myJourneyButton = document.getElementById("myJourneyButton");
+        const timerDisplay = document.getElementById("timer");
+        const startBell = document.getElementById("startBell");
+        const endBell = document.getElementById("endBell");
+        const backgroundSound = document.getElementById("backgroundSound");
+        const progressCircle = document.querySelector(".progress-ring circle");
+        const timeSlider = document.getElementById("timeSlider");
+        const timeValue = document.getElementById("timeValue");
+        const title = document.getElementById("title");
+        const popup = document.getElementById("popup");
+        const totalTimeDisplay = document.getElementById("totalTime");
+        const totalDaysDisplay = document.getElementById("totalDays");
+        const closePopup = document.getElementById("closePopup");
+        const videoToggle = document.getElementById("videoToggle");
+        const videoOption = document.getElementById("videoOption");
+        const backgroundVideo = document.getElementById("backgroundVideo");
+        const bodyBackground = document.body.style;
+
+        const circleCircumference = 628; // Circumference of the circle (2 * π * r)
+        progressCircle.style.strokeDasharray = circleCircumference;
+
+        let timerDuration = parseInt(timeSlider.value, 10) * 60; // Initial duration in seconds
+        let timer;
+        let timeLeft = timerDuration;
+
+        // Load stats from localStorage
+        let totalMinutesMeditated = parseInt(localStorage.getItem("totalMinutesMeditated")) || 0;
+        let totalDaysMeditated = parseInt(localStorage.getItem("totalDaysMeditated")) || 0;
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgressCircle() {
+            const progress = ((timerDuration - timeLeft) / timerDuration) * circleCircumference;
+            progressCircle.style.strokeDashoffset = circleCircumference - progress;
+        }
+
+        function startTimer() {
+            startBell.play();
+            backgroundSound.play();
+            startButton.classList.add("hidden");
+            myJourneyButton.classList.add("hidden");
+            document.getElementById("githubLink").classList.add("hidden"); // Hide GitHub link
+
+            // Hide the title and slider
+            title.classList.add("hidden");
+            timeSlider.classList.add("hidden");
+            timeValue.parentElement.classList.add("hidden");
+            videoOption.classList.add("hidden");
+
+            timer = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    updateProgressCircle();
+                } else {
+                    clearInterval(timer);
+                    endBell.play();
+                    backgroundSound.pause();
+                    updateStats();
+                    showPopup();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timeLeft = timerDuration;
+            updateTimerDisplay();
+            progressCircle.style.strokeDashoffset = circleCircumference;
+            backgroundSound.pause();
+            backgroundSound.currentTime = 0;
+            startButton.classList.remove("hidden");
+            myJourneyButton.classList.remove("hidden");
+            document.getElementById("githubLink").classList.remove("hidden"); // Show GitHub link
+
+            // Show the title and slider again
+            title.classList.remove("hidden");
+            timeSlider.classList.remove("hidden");
+            timeValue.parentElement.classList.remove("hidden");
+        }
+
+
+        function updateStats() {
+            const meditatedMinutes = timerDuration / 60;
+            totalMinutesMeditated += meditatedMinutes;
+
+            // Increment total days meditated if it's a new day
+            const today = new Date().toDateString();
+            const lastMeditationDay = localStorage.getItem("lastMeditationDay");
+            if (today !== lastMeditationDay) {
+                totalDaysMeditated++;
+                localStorage.setItem("lastMeditationDay", today);
+            }
+
+            // Save stats to localStorage
+            localStorage.setItem("totalMinutesMeditated", totalMinutesMeditated);
+            localStorage.setItem("totalDaysMeditated", totalDaysMeditated);
+        }
+
+        function showPopup() {
+            totalTimeDisplay.textContent = totalMinutesMeditated;
+            totalDaysDisplay.textContent = totalDaysMeditated;
+            popup.classList.remove("hidden");
+        }
+
+        closePopup.addEventListener("click", () => {
+            popup.classList.add("hidden");
+            resetTimer();
+        });
+
+        myJourneyButton.addEventListener("click", showPopup);
+
+        timeSlider.addEventListener("input", () => {
+            const minutes = parseInt(timeSlider.value, 10);
+            timeValue.textContent = minutes;
+            timerDuration = minutes * 60;
+            timeLeft = timerDuration;
+            updateTimerDisplay();
+            progressCircle.style.strokeDashoffset = circleCircumference;
+        });
+
+        startButton.addEventListener("click", startTimer);
+
+        // Reset with Escape key
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                resetTimer();
+            }
+        });
+
+        // Initialize the timer display
+        updateTimerDisplay();
+
+        // Adding video background
+        videoToggle.addEventListener("change", () => {
+            if (videoToggle.checked) {
+                backgroundVideo.classList.remove("hidden"); // Show the video
+                bodyBackground.background = "none"; // Remove static background
+            } else {
+                backgroundVideo.classList.add("hidden"); // Hide the video
+                bodyBackground.background = "url('assets/meditation-background.jpg') no-repeat center center fixed"; // Restore static background
+                bodyBackground.backgroundSize = "cover";
+            }
+        });
+    </script>
+</body>
+</html>
