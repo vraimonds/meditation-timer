@@ -28,6 +28,7 @@
             width: 200px;
             height: 200px;
             margin: 40px auto;
+            cursor: pointer; /* Makes the cursor change to a finger */
         }
 
         .progress-ring {
@@ -207,14 +208,13 @@
         <source src="assets/background-video.mp4" type="video/mp4">
         Your browser does not support the video tag.
     </video>
-    
 
     <h1 id="title">Meditation Timer</h1>
     <div class="time-display">
         <span id="timeValue">10</span>
     </div>
     <input type="range" id="timeSlider" min="1" max="30" value="10">
-    <div class="timer-container">
+    <div id="timer-area" class="timer-container">
         <svg class="progress-ring" width="200" height="200">
             <circle cx="100" cy="100" r="90"></circle>
         </svg>
@@ -255,6 +255,7 @@
         const startButton = document.getElementById("startButton");
         const myJourneyButton = document.getElementById("myJourneyButton");
         const timerDisplay = document.getElementById("timer");
+        const timerContainer = document.getElementById("timer-area");
         const startBell = document.getElementById("startBell");
         const endBell = document.getElementById("endBell");
         const backgroundSound = document.getElementById("backgroundSound");
@@ -274,6 +275,10 @@
         const circleCircumference = 628; // Circumference of the circle (2 * π * r)
         progressCircle.style.strokeDasharray = circleCircumference;
 
+        const appState = {
+            isVisible: true, // Global visibility state
+        };
+
         let timerDuration = parseInt(timeSlider.value, 10) * 60; // Initial duration in seconds
         let timer;
         let timeLeft = timerDuration;
@@ -282,6 +287,7 @@
         let totalMinutesMeditated = parseInt(localStorage.getItem("totalMinutesMeditated")) || 0;
         let totalDaysMeditated = parseInt(localStorage.getItem("totalDaysMeditated")) || 0;
 
+        // Timer controls
         function updateTimerDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
@@ -296,6 +302,7 @@
         function startTimer() {
             startBell.play();
             backgroundSound.play();
+            appState.isVisible = false;
             startButton.classList.add("hidden");
             myJourneyButton.classList.add("hidden");
             document.getElementById("githubLink").classList.add("hidden"); // Hide GitHub link
@@ -325,6 +332,7 @@
             clearInterval(timer);
             timeLeft = timerDuration;
             updateTimerDisplay();
+            appState.isVisible = true;
             progressCircle.style.strokeDashoffset = circleCircumference;
             backgroundSound.pause();
             backgroundSound.currentTime = 0;
@@ -338,6 +346,14 @@
             timeValue.parentElement.classList.remove("hidden");
         }
 
+        // Toggle timer visibility on click
+        function toggleTimerVisibility() {
+            appState.isVisible = !appState.isVisible; // Toggle state
+            const element = document.getElementById("timer");
+            element.style.display = appState.isVisible ? "block" : "none";
+        }
+
+        document.getElementById("timer-area").addEventListener("click", toggleTimerVisibility);
 
         function updateStats() {
             const meditatedMinutes = timerDuration / 60;
