@@ -209,39 +209,15 @@
             object-fit: cover; /* Ensures the video covers the screen */
             z-index: -1; /* Places the video behind other content */
         }
-
-        #fullscreenButton {
-            position: fixed; /* Fix position relative to the viewport */
-            bottom: 20px; /* Adjust vertical positioning */
-            right: 20px; /* Adjust horizontal positioning */
-            width: 50px; /* Button width */
-            height: 50px; /* Button height */
-            color: rgba(255, 255, 255, 0.098); /* Icon color */
-            cursor: pointer; /* Change cursor on hover */
-            z-index: 1000; /* Ensure it appears above other elements */
-            font-size: 24px; /* Icon size */
-            display: flex; /* Center content */
-            align-items: center;
-            justify-content: center;
-            /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Optional: subtle shadow */
-            transition: background-color 0.3s ease; /* Smooth hover effect */
-            font-weight: bold;
-            font-size: xx-large;
-        }
-
-        #fullscreenButton:hover {
-            color: rgba(255, 255, 255, 0.298);
-        }
-
     </style>
 </head>
 <body>
-    <div id="appContainer">
-        <video id="backgroundVideo" autoplay muted loop playsinline class="hidden">
-            <source src="assets/background-video.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
+    <video id="backgroundVideo" autoplay muted loop playsinline class="hidden">
+        <source src="assets/background-video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
 
+    <div id="appContainer">
         <h1 id="title">Meditation Timer</h1>
         <div class="time-display">
             <span id="timeValue">10</span>
@@ -278,8 +254,6 @@
         <a id="githubLink" href="https://github.com/vraimonds/meditation-timer" target="_blank">
             <img src="assets/GitHub-Mark.png" alt="GitHub" />
         </a>
-
-        <!-- <div id="fullscreenButton" title="Toggle Fullscreen">⛶</div> -->
     </div>
 
     <!-- Sounds -->
@@ -335,24 +309,6 @@
         document.addEventListener("keydown", (event) => {
             if (event.key === "f" || event.key === "F") {
                 toggleFullscreen();
-            }
-        });
-
-        const fullscreenButton = document.getElementById("fullscreenButton");
-
-        fullscreenButton.addEventListener("click", () => {
-            if (!document.fullscreenElement) {
-                appContainer.requestFullscreen()
-                    .then(() => {
-                        console.log("Entered fullscreen mode");
-                    })
-                    .catch(err => console.error(`Error attempting to enter fullscreen: ${err.message}`));
-            } else {
-                document.exitFullscreen()
-                    .then(() => {
-                        console.log("Exited fullscreen mode");
-                    })
-                    .catch(err => console.error(`Error attempting to exit fullscreen: ${err.message}`));
             }
         });
 
