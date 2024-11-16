@@ -14,6 +14,11 @@
             padding: 20px;
         }
 
+        #appContainer:fullscreen {
+            background: url('assets/meditation-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
         h1 {
             margin-bottom: 20px;
             text-shadow: 2px 2px 5px black;
@@ -158,13 +163,17 @@
             border-radius: 25px;
             cursor: pointer;
             color: white;
-            margin-top: 10px;
+            margin-top: 40px;
             font-size: 18px;
             box-shadow: 2px 2px 5px black;
         }
 
         .popup button:hover {
             background-color: rgba(80, 80, 80, 0.8);
+        }
+
+        closePopup {
+            margin-top: 40px;
         }
 
         #githubLink {
@@ -201,54 +210,81 @@
             z-index: -1; /* Places the video behind other content */
         }
 
+        #fullscreenButton {
+            position: fixed; /* Fix position relative to the viewport */
+            bottom: 20px; /* Adjust vertical positioning */
+            right: 20px; /* Adjust horizontal positioning */
+            width: 50px; /* Button width */
+            height: 50px; /* Button height */
+            color: rgba(255, 255, 255, 0.098); /* Icon color */
+            cursor: pointer; /* Change cursor on hover */
+            z-index: 1000; /* Ensure it appears above other elements */
+            font-size: 24px; /* Icon size */
+            display: flex; /* Center content */
+            align-items: center;
+            justify-content: center;
+            /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Optional: subtle shadow */
+            transition: background-color 0.3s ease; /* Smooth hover effect */
+            font-weight: bold;
+            font-size: xx-large;
+        }
+
+        #fullscreenButton:hover {
+            color: rgba(255, 255, 255, 0.298);
+        }
+
     </style>
 </head>
 <body>
-    <video id="backgroundVideo" autoplay muted loop playsinline class="hidden">
-        <source src="assets/background-video.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
+    <div id="appContainer">
+        <video id="backgroundVideo" autoplay muted loop playsinline class="hidden">
+            <source src="assets/background-video.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
 
-    <h1 id="title">Meditation Timer</h1>
-    <div class="time-display">
-        <span id="timeValue">10</span>
+        <h1 id="title">Meditation Timer</h1>
+        <div class="time-display">
+            <span id="timeValue">10</span>
+        </div>
+        <input type="range" id="timeSlider" min="1" max="30" value="10">
+        <div id="timer-area" class="timer-container">
+            <svg class="progress-ring" width="200" height="200">
+                <circle cx="100" cy="100" r="90"></circle>
+            </svg>
+            <div class="timer" id="timer">10:00</div>
+        </div>
+        <button id="startButton">Start</button>
+        <button id="myJourneyButton">My Journey</button>
+
+        <!-- Popup -->
+        <div id="popup" class="popup hidden">
+            <h2>Meditation Stats</h2>
+            <p>
+                <span>⏳</span><span id="totalTime">0</span> minutes meditated.
+            </p>
+            <p>
+                <span>📅</span>Meditated on <span id="totalDays">0</span> day(s).
+            </p>
+            <button id="closePopup">Close</button>
+        </div>
+
+        <div id="videoOption">
+            <label>
+                <input type="checkbox" id="videoToggle">
+                Use video background
+            </label>
+        </div>    
+
+        <a id="githubLink" href="https://github.com/vraimonds/meditation-timer" target="_blank">
+            <img src="assets/GitHub-Mark.png" alt="GitHub" />
+        </a>
+
+        <div id="fullscreenButton" title="Toggle Fullscreen">⛶</div>
     </div>
-    <input type="range" id="timeSlider" min="1" max="30" value="10">
-    <div id="timer-area" class="timer-container">
-        <svg class="progress-ring" width="200" height="200">
-            <circle cx="100" cy="100" r="90"></circle>
-        </svg>
-        <div class="timer" id="timer">10:00</div>
-    </div>
-    <button id="startButton">Start</button>
-    <button id="myJourneyButton">My Journey</button>
-
-    <!-- Popup -->
-    <div id="popup" class="popup hidden">
-        <h2>Meditation Stats</h2>
-        <p>
-            <span>⏳</span> You have meditated for <span id="totalTime">0</span> minutes.
-        </p>
-        <p>
-            <span>📅</span> Over <span id="totalDays">0</span> days.
-        </p>
-        <button id="closePopup">Close</button>
-    </div>
-
-    <div id="videoOption">
-        <label>
-            <input type="checkbox" id="videoToggle">
-            Use video background
-        </label>
-    </div>    
-
-    <a id="githubLink" href="https://github.com/vraimonds/meditation-timer" target="_blank">
-        <img src="assets/GitHub-Mark.png" alt="GitHub" />
-    </a>
 
     <!-- Sounds -->
-    <audio id="startBell" src="assets/start-bell.mp3"></audio>
-    <audio id="endBell" src="assets/end-bell.mp3"></audio>
+    <audio id="startBell" src="assets/start-bell.mp3" preload="auto"></audio>
+    <audio id="endBell" src="assets/end-bell.mp3" preload="auto"></audio>
     <audio id="backgroundSound" src="assets/background-sound.mp3" loop></audio>
 
     <script>
@@ -271,6 +307,54 @@
         const videoOption = document.getElementById("videoOption");
         const backgroundVideo = document.getElementById("backgroundVideo");
         const bodyBackground = document.body.style;
+        // Get the container element
+        const appContainer = document.getElementById("appContainer");
+
+        // Fullscreen toggle logic
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                appContainer.requestFullscreen()
+                    .then(() => {
+                        console.log("Entered fullscreen mode");
+                    })
+                    .catch((err) => {
+                        console.error(`Error attempting to enter fullscreen: ${err.message}`);
+                    });
+            } else {
+                document.exitFullscreen()
+                    .then(() => {
+                        console.log("Exited fullscreen mode");
+                    })
+                    .catch((err) => {
+                        console.error(`Error attempting to exit fullscreen: ${err.message}`);
+                    });
+            }
+        }
+
+        // Listen for the "F" key to toggle fullscreen
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "f" || event.key === "F") {
+                toggleFullscreen();
+            }
+        });
+
+        const fullscreenButton = document.getElementById("fullscreenButton");
+
+        fullscreenButton.addEventListener("click", () => {
+            if (!document.fullscreenElement) {
+                appContainer.requestFullscreen()
+                    .then(() => {
+                        console.log("Entered fullscreen mode");
+                    })
+                    .catch(err => console.error(`Error attempting to enter fullscreen: ${err.message}`));
+            } else {
+                document.exitFullscreen()
+                    .then(() => {
+                        console.log("Exited fullscreen mode");
+                    })
+                    .catch(err => console.error(`Error attempting to exit fullscreen: ${err.message}`));
+            }
+        });
 
         const circleCircumference = 565.486677646; // Circumference of the circle (2 * π * r)
         progressCircle.style.strokeDasharray = circleCircumference;
@@ -320,7 +404,12 @@
                     updateProgressCircle();
                 } else {
                     clearInterval(timer);
-                    endBell.play();
+
+                    // Play end sound
+                    endBell.play().catch((err) => {
+                        console.error("Error playing end sound:", err);
+                    });
+
                     backgroundSound.pause();
                     updateStats();
                     showPopup();
@@ -338,6 +427,7 @@
             backgroundSound.currentTime = 0;
             startButton.classList.remove("hidden");
             myJourneyButton.classList.remove("hidden");
+            videoOption.classList.remove("hidden");
             document.getElementById("githubLink").classList.remove("hidden"); // Show GitHub link
 
             // Show the title and slider again
@@ -345,6 +435,11 @@
             timeSlider.classList.remove("hidden");
             timeValue.parentElement.classList.remove("hidden");
         }
+
+        // Reset timer on initial page load
+        document.addEventListener("DOMContentLoaded", () => {
+            resetTimer();
+        });
 
         // Toggle timer visibility on click
         function toggleTimerVisibility() {
