@@ -210,10 +210,85 @@
             object-fit: cover; /* Ensures the video covers the screen */
             z-index: -1; /* Places the video behind other content */
         }
+
+        /* Menu Button */
+        #menuButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            z-index: 1001; /* Ensure it stays above other elements */
+            opacity: 0.8;
+        }
+
+        #menuButton:hover {
+            opacity: 1.0;
+        }
+
+        /* Dropdown Menu */
+        #dropdownMenu {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            background-color: rgba(50, 50, 50, 0.9);
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            z-index: 1000;
+        }
+
+        #dropdownMenu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #dropdownMenu li {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        #dropdownMenu li:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Meditation Message Display */
+        #meditationMessageDisplay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            font-size: 32px;
+            z-index: 1002;
+            opacity: 0; /* Start invisible */
+            transition: opacity 1s ease-in-out; /* Transition for fading */
+        }
+
+        #meditationMessageDisplay.visible {
+            opacity: 1; /* Fully visible when the 'visible' class is added */
+        }
+
     </style>
 </head>
 <body>
     <div id="appContainer">
+        <!-- Menu Button -->
+        <div id="menuButton">
+            &#9776;
+        </div>
+
+        <!-- Dropdown Menu -->
+        <div id="dropdownMenu" class="hidden">
+            <ul>
+                <li id="lettingGoMeditation">Letting Go Meditation</li>
+                <li id="freeMeditation">No Guidance</li>
+                <!-- Add more meditations here if needed -->
+            </ul>
+        </div>
         <video id="backgroundVideo" autoplay muted loop playsinline class="hidden">
             <source src="assets/background-video.mp4" type="video/mp4">
             Your browser does not support the video tag.
@@ -257,6 +332,12 @@
         </a>
     </div>
 
+    <!-- Meditation Message Display -->
+    <div id="meditationMessageDisplay" class="hidden">
+        <p id="meditationMessage"></p>
+    </div>
+
+
     <!-- Sounds -->
     <audio id="startBell" src="assets/start-bell.mp3" preload="auto"></audio>
     <audio id="endBell" src="assets/end-bell.mp3" preload="auto"></audio>
@@ -284,6 +365,44 @@
         const bodyBackground = document.body.style;
         // Get the container element
         const appContainer = document.getElementById("appContainer");
+
+        // Menu Button and Dropdown Menu Elements
+        const menuButton = document.getElementById("menuButton");
+        const dropdownMenu = document.getElementById("dropdownMenu");
+        const lettingGoMeditationItem = document.getElementById("lettingGoMeditation");
+        const freeMeditation = document.getElementById("freeMeditation");
+
+        // Meditation Message Elements
+        const meditationMessageDisplay = document.getElementById("meditationMessageDisplay");
+        const meditationMessage = document.getElementById("meditationMessage");
+
+        let currentMeditation = null; // Tracks the selected meditation
+        let isTimerRunning = false; // Tracks if the timer is running
+
+        // Toggle Dropdown Menu Visibility
+        menuButton.addEventListener("click", () => {
+            dropdownMenu.classList.toggle("hidden");
+        });
+
+        // Close the menu if clicked outside
+        document.addEventListener("click", (event) => {
+            if (!menuButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+                dropdownMenu.classList.add("hidden");
+            }
+        });
+
+        // Handle "Letting Go Meditation" Click
+        lettingGoMeditationItem.addEventListener("click", () => {
+            dropdownMenu.classList.add("hidden"); // Hide the menu
+            currentMeditation = 'lettingGo';
+        });
+
+        // Handle "Letting Go Meditation" Click
+        freeMeditation.addEventListener("click", () => {
+            dropdownMenu.classList.add("hidden"); // Hide the menu
+            currentMeditation = 'freeMeditation';
+        });
+
 
         // Fullscreen toggle logic
         function toggleFullscreen() {
@@ -341,29 +460,28 @@
         }
 
         function startTimer() {
+            if (isTimerRunning) return; // Prevent multiple timers
+            isTimerRunning = true; // Set timer running flag
+
             startBell.play();
             backgroundSound.play();
             appState.isVisible = false;
             startButton.classList.add("hidden");
             myJourneyButton.classList.add("hidden");
             timerDisplay.classList.add("hidden");
-            appState.isVisible = false;
             document.getElementById("githubLink").classList.add("hidden"); // Hide GitHub link
-
-            // Unlock audio playback for iOS
-            endBell.play().then(() => {
-                endBell.pause(); // Immediately pause after unlocking
-                endBell.currentTime = 0; // Reset to the start
-                console.log("Audio playback unlocked for iOS.");
-            }).catch((err) => {
-                console.error("Audio playback could not be unlocked:", err);
-            });
+            meditationMessageDisplay.classList.remove("hidden");
 
             // Hide the title and slider
             title.classList.add("hidden");
             timeSlider.classList.add("hidden");
             timeValue.parentElement.classList.add("hidden");
             videoOption.classList.add("hidden");
+
+            // Start meditation messages if a meditation is selected
+            if (currentMeditation) {
+                startMeditationMessages();
+            }
 
             timer = setInterval(() => {
                 if (timeLeft > 0) {
@@ -372,21 +490,67 @@
                     updateProgressCircle();
                 } else {
                     clearInterval(timer);
-
-                    // Play end sound
-                    endBell.play().catch((err) => {
-                        console.error("Error playing end sound:", err);
-                    });
-
+                    timeLeft = timerDuration; // Reset timeLeft
+                    isTimerRunning = false;
                     backgroundSound.pause();
+                    backgroundSound.currentTime = 0;
                     updateStats();
                     showPopup();
+
+                    // Stop meditation messages
+                    if (currentMeditation) {
+                        meditationMessageDisplay.classList.add("hidden");
+                        currentMeditation = null;
+                    }
                 }
             }, 1000);
         }
 
+        function startMeditationMessages() {
+            if (currentMeditation === 'lettingGo') {
+                const messages = [
+                    "Breathe in and let your mind welcome peace",
+                    "Exhale and let go of any tension and worries"
+                ];
+                let messageIndex = 0;
+
+                function showMessage() {
+                    if (!isTimerRunning) {
+                        meditationMessageDisplay.classList.remove('visible');
+                        return;
+                    }
+
+                    // Update message text
+                    meditationMessage.textContent = messages[messageIndex];
+
+                    // Fade in
+                    meditationMessageDisplay.classList.add('visible');
+
+                    // After 4 seconds (1s fade-in + 3s fully visible), start fade out
+                    setTimeout(() => {
+                        meditationMessageDisplay.classList.remove('visible');
+                    }, 5000);
+
+                    // After 7 seconds (1s fade-in + 3s visible + 1s fade-out + 2s gap), show next message
+                    setTimeout(() => {
+                        messageIndex = (messageIndex + 1) % messages.length;
+                        if (isTimerRunning) {
+                            showMessage(); // Show next message
+                        }
+                    }, 9000); // Total cycle time is 7 seconds
+                }
+
+                showMessage(); // Start the message cycle
+            }
+        }
+
         function resetTimer() {
             clearInterval(timer);
+            isTimerRunning = false; // Ensure timer running state is updated
+            meditationMessageDisplay.classList.add("hidden"); // Hide messages
+            currentMeditation = null; // Reset current meditation
+
+            // Existing reset logic...
             timeLeft = timerDuration;
             updateTimerDisplay();
             appState.isVisible = true;
@@ -397,7 +561,6 @@
             myJourneyButton.classList.remove("hidden");
             videoOption.classList.remove("hidden");
             timerDisplay.classList.remove("hidden");
-            appState.isVisible = true;
             document.getElementById("githubLink").classList.remove("hidden"); // Show GitHub link
 
             // Show the title and slider again
